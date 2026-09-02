@@ -7,10 +7,12 @@ app.get('/', (req, res) => {
     res.send('Twitter-D365 Middleware is running');
 });
 
+app.get('/webhook', (req, res) => {
+    res.status(200).send('Webhook is running');
+});
+
 app.post('/webhook', async (req, res) => {
     console.log('Received webhook:', JSON.stringify(req.body, null, 2));
-
-    // Later we will send this message to Dynamics 365 Omnichannel
 
     res.status(200).send('OK');
 });

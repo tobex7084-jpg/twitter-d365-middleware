@@ -1,6 +1,11 @@
 {
   "name": "twitter-d365-middleware",
   "version": "1.0.0",
+  "description": "Middleware connecting X Direct Messages to Dynamics 365 Contact Center",
+  "main": "server.js",
+  "engines": {
+    "node": ">=18"
+  },
   "dependencies": {
     "express": "^4.18.2"
   },

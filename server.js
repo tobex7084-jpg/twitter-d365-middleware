@@ -639,11 +639,16 @@ app.post('/webhook', (req, res) => {
                 result.conversationId
             );
         } catch (error) {
-            console.error(
-                'Failed to send X DM to Dynamics 365:',
-                error.message
-            );
-        }
+    console.error(
+        'Failed to send X DM to Dynamics 365'
+    );
+
+    console.error('Message:', error.message);
+
+    console.error('Stack:', error.stack);
+
+    console.error('Full Error:', error);
+}
     });
 });
 

@@ -107,21 +107,23 @@ function extractXDirectMessage(body) {
     ]);
 
     const messageText = readFirstValue(body, [
-        'message_data.text',
-        'data.message_data.text',
-        'data.text',
-        'text',
-        'direct_message_events.0.message_create.message_data.text'
-    ]);
+    'message_data.text',
+    'data.message_data.text',
+    'data.text',
+    'text',
+    'payload.direct_message_events.0.message_create.message_data.text',
+    'data.payload.direct_message_events.0.message_create.message_data.text'
+]);
 
     const senderId = readFirstValue(body, [
-        'sender_id',
-        'message_data.sender_id',
-        'data.sender_id',
-        'data.sender.id',
-        'data.author_id',
-        'direct_message_events.0.message_create.sender_id'
-    ]);
+    'sender_id',
+    'message_data.sender_id',
+    'data.sender_id',
+    'data.sender.id',
+    'data.author_id',
+    'payload.direct_message_events.0.message_create.sender_id',
+    'data.payload.direct_message_events.0.message_create.sender_id'
+]);
 
     const senderUsername = readFirstValue(body, [
         'sender_username',

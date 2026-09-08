@@ -281,7 +281,7 @@ async function callD365MessagingApi(
     'Request URL:',
     requestUrl
 );
-``
+    
     console.log(
         `Calling Dynamics Messaging API: ${method} ${path}`
     );

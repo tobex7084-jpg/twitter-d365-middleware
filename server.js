@@ -277,7 +277,11 @@ async function callD365MessagingApi(
     );
 
     const requestUrl = `${baseUrl}${path}`;
-
+    console.log(
+    'Request URL:',
+    requestUrl
+);
+``
     console.log(
         `Calling Dynamics Messaging API: ${method} ${path}`
     );
@@ -642,6 +646,22 @@ app.post('/webhook', (req, res) => {
     console.error(
         'Failed to send X DM to Dynamics 365'
     );
+
+    console.error(
+        'Message:',
+        error.message
+    );
+
+    console.error(
+        'Stack:',
+        error.stack
+    );
+
+    console.error(
+        'Full Error:',
+        error
+    );
+}
 
     console.error('Message:', error.message);
 

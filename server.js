@@ -26,7 +26,7 @@ const REQUIRED_ENVIRONMENT_VARIABLES = [
 ];
 
 /*
- * Verify required environment variables without exposing values.
+ * Validate configuration without logging secret values.
  */
 function validateEnvironmentVariables() {
     const missingVariables =
@@ -56,14 +56,13 @@ function validateEnvironmentVariables() {
  * Remove trailing slashes from a URL.
  */
 function removeTrailingSlash(value) {
-    return String(value || '').replace(/\/+$/, '');
+    return String(value || '')
+        .trim()
+        .replace(/\/+$/, '');
 }
 
 /*
- * Retrieve the first non-empty value from a list of object paths.
- *
- * Numeric path components, such as direct_message_events.0,
- * also work with JavaScript arrays.
+ * Return the first non-empty value found at any supplied path.
  */
 function readFirstValue(object, paths) {
     for (const path of paths) {
@@ -100,78 +99,82 @@ function readFirstValue(object, paths) {
 }
 
 /*
- * Extract the required fields from an incoming X Direct Message.
+ * Obtain an X user record from data.payload.users.
+ */
+function getXUserFromPayload(body, senderId) {
+    if (!senderId) {
+        return undefined;
+    }
+
+    return (
+        body &&
+        body.data &&
+        body.data.payload &&
+        body.data.payload.users &&
+        body.data.payload.users[senderId] &&
+        body.data.payload.users[senderId].data
+    );
+}
+
+/*
+ * Extract the fields required from the X DM event.
  *
- * The data.payload paths match the payload structure observed
- * in the Render logs.
+ * The paths below include the exact payload structure already
+ * displayed in your Render log.
  */
 function extractXDirectMessage(body) {
     const eventType = readFirstValue(body, [
-        'event_type',
         'data.event_type',
+        'event_type',
         'type'
     ]);
 
     const messageText = readFirstValue(body, [
-        'message_data.text',
-        'data.message_data.text',
-        'data.text',
-        'text',
-        'direct_message_events.0.message_create.message_data.text',
+        'data.payload.direct_message_events.0.message_create.message_data.text',
         'payload.direct_message_events.0.message_create.message_data.text',
-        'data.payload.direct_message_events.0.message_create.message_data.text'
+        'direct_message_events.0.message_create.message_data.text',
+        'data.message_data.text',
+        'message_data.text',
+        'data.text',
+        'text'
     ]);
 
     const senderId = readFirstValue(body, [
-        'sender_id',
-        'message_data.sender_id',
-        'data.sender_id',
-        'data.sender.id',
-        'data.author_id',
-        'direct_message_events.0.message_create.sender_id',
+        'data.payload.direct_message_events.0.message_create.sender_id',
         'payload.direct_message_events.0.message_create.sender_id',
-        'data.payload.direct_message_events.0.message_create.sender_id'
-    ]);
-
-    const senderUsername = readFirstValue(body, [
-        'sender_username',
-        'message_data.sender_username',
-        'data.sender_username',
-        'data.sender.username',
-        'payload.users.0.screen_name',
-        'data.payload.users.0.screen_name'
-    ]);
-
-    const senderName = readFirstValue(body, [
-        'sender_name',
-        'message_data.sender_name',
-        'data.sender_name',
-        'data.sender.name',
-        'payload.users.0.name',
-        'data.payload.users.0.name'
+        'direct_message_events.0.message_create.sender_id',
+        'data.sender_id',
+        'sender_id'
     ]);
 
     const messageId = readFirstValue(body, [
-        'id',
-        'message_id',
+        'data.payload.direct_message_events.0.id',
+        'payload.direct_message_events.0.id',
+        'direct_message_events.0.id',
+        'data.message_data.id',
         'message_data.id',
         'data.id',
-        'data.message_data.id',
-        'direct_message_events.0.id',
-        'payload.direct_message_events.0.id',
-        'data.payload.direct_message_events.0.id'
+        'message_id',
+        'id'
     ]);
 
-    const xConversationId = readFirstValue(body, [
-        'dm_conversation_id',
-        'conversation_id',
-        'message_data.dm_conversation_id',
-        'data.dm_conversation_id',
-        'data.conversation_id',
-        'payload.direct_message_events.0.dm_conversation_id',
-        'data.payload.direct_message_events.0.dm_conversation_id'
+    const recipientId = readFirstValue(body, [
+        'data.payload.direct_message_events.0.message_create.target.recipient_id',
+        'payload.direct_message_events.0.message_create.target.recipient_id',
+        'direct_message_events.0.message_create.target.recipient_id'
     ]);
 
-    return {
-        eventType:
-           
+    const senderIdAsString =
+        senderId !== undefined
+            ? String(senderId)
+            : undefined;
+
+    const userRecord =
+        getXUserFromPayload(
+            body,
+            senderIdAsString
+        );
+
+    const senderUsername =
+        userRecord && userRecord.username
+            ? String(userRecord.username)

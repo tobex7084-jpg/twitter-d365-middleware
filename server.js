@@ -5,6 +5,10 @@ const crypto = require('crypto');
 
 const app = express();
 
+/*
+ * Node.js 18 or later is required because this application
+ * uses the built-in fetch function.
+ */
 app.use(
     express.json({
         limit: '2mb'
@@ -26,7 +30,8 @@ const REQUIRED_ENVIRONMENT_VARIABLES = [
 ];
 
 /*
- * Validate configuration without logging secret values.
+ * Validate required environment variables without exposing
+ * secret values in Render logs.
  */
 function validateEnvironmentVariables() {
     const missingVariables =
@@ -53,7 +58,7 @@ function validateEnvironmentVariables() {
 }
 
 /*
- * Remove trailing slashes from a URL.
+ * Remove trailing slash characters from a URL.
  */
 function removeTrailingSlash(value) {
     return String(value || '')
@@ -62,7 +67,8 @@ function removeTrailingSlash(value) {
 }
 
 /*
- * Return the first non-empty value found at any supplied path.
+ * Return the first non-empty value found at one of the
+ * supplied object paths.
  */
 function readFirstValue(object, paths) {
     for (const path of paths) {
@@ -99,7 +105,7 @@ function readFirstValue(object, paths) {
 }
 
 /*
- * Obtain an X user record from data.payload.users.
+ * Look up an X user record inside data.payload.users.
  */
 function getXUserFromPayload(body, senderId) {
     if (!senderId) {
@@ -117,10 +123,10 @@ function getXUserFromPayload(body, senderId) {
 }
 
 /*
- * Extract the fields required from the X DM event.
+ * Extract the Direct Message information from an X event.
  *
- * The paths below include the exact payload structure already
- * displayed in your Render log.
+ * These paths include the exact X payload structure that
+ * appeared in your Render logs.
  */
 function extractXDirectMessage(body) {
     const eventType = readFirstValue(body, [
@@ -147,6 +153,12 @@ function extractXDirectMessage(body) {
         'sender_id'
     ]);
 
+    const recipientId = readFirstValue(body, [
+        'data.payload.direct_message_events.0.message_create.target.recipient_id',
+        'payload.direct_message_events.0.message_create.target.recipient_id',
+        'direct_message_events.0.message_create.target.recipient_id'
+    ]);
+
     const messageId = readFirstValue(body, [
         'data.payload.direct_message_events.0.id',
         'payload.direct_message_events.0.id',
@@ -158,23 +170,51 @@ function extractXDirectMessage(body) {
         'id'
     ]);
 
-    const recipientId = readFirstValue(body, [
-        'data.payload.direct_message_events.0.message_create.target.recipient_id',
-        'payload.direct_message_events.0.message_create.target.recipient_id',
-        'direct_message_events.0.message_create.target.recipient_id'
-    ]);
-
-    const senderIdAsString =
+    const senderIdString =
         senderId !== undefined
             ? String(senderId)
             : undefined;
 
-    const userRecord =
+    const xUser =
         getXUserFromPayload(
             body,
-            senderIdAsString
+            senderIdString
         );
 
     const senderUsername =
-        userRecord && userRecord.username
-            ? String(userRecord.username)
+        xUser && xUser.username
+            ? String(xUser.username)
+            : undefined;
+
+    const senderName =
+        xUser && xUser.name
+            ? String(xUser.name)
+            : undefined;
+
+    return {
+        eventType:
+            eventType !== undefined
+                ? String(eventType)
+                : undefined,
+
+        messageText:
+            typeof messageText === 'string'
+                ? messageText.trim()
+                : messageText,
+
+        senderId:
+            senderIdString,
+
+        senderUsername,
+
+        senderName,
+
+        recipientId:
+            recipientId !== undefined
+                ? String(recipientId)
+                : undefined,
+
+        messageId:
+            messageId !== undefined
+                ? String(messageId)
+                : undefined
